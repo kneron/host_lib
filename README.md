@@ -122,4 +122,4 @@ Here are the steps you need to update the dongle and run the example. Let's take
 
 Now, you can get a window pop up and running your test. Congratulations!
 
-To stop the test, just use `ctrl-c` when focusing on the command line.
+To stop the test and quit, just press `q` when focusing on the command line.
