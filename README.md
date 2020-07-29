@@ -35,6 +35,10 @@ pip install pkgs/kdp_host_api-<version>_<os_version>_-py3-none-any.whl
 
 Please check the `pkgs` folder for the `version` available.
 
+### Troubleshooting
+
+**If the size of the `.whl` is 0, please use `git-lfs pull` to fetch the pacakge.***
+
 ## Run examples
 
 ### Getting started with help
