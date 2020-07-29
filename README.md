@@ -37,7 +37,7 @@ Please check the `pkgs` folder for the `version` available.
 
 ### Troubleshooting
 
-**If the size of the `.whl` is 0, please use `git-lfs pull` to fetch the pacakge.***
+**If the the `.whl` can not be installed and reporting error `File is not a zip file`, please use `git-lfs pull` to fetch the pacakge.***
 
 ## Run examples
 
