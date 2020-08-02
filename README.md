@@ -21,6 +21,7 @@ This project contains python examples for Kneron USB dongle
 
 **Mac OS**:
 
+* **Mac OS should be later than 10.15.6**.
 * libusb (Install with [Homebrew](https://brew.sh/) using `brew install libusb`)
 
 ### Installation
