@@ -29,14 +29,14 @@ def user_test_single_dme(dev_idx):
     npraw_data = kdp_wrapper.kdp_inference(dev_idx, img_path)
 
     # Do postprocessing with keras
-    preds = kdp_wrapper.softmax(npraw_data).reshape(1, 1000)
+    preds = kdp_wrapper.softmax(npraw_data[0]).reshape(1, 1000)
     top_indexes(preds, 3)
     #print('\nPredicted:', decode_predictions(preds, top=3)[0])
 
     npraw_data = kdp_wrapper.kdp_inference(dev_idx, img_path2)
 
     # Do postprocessing with keras
-    preds = kdp_wrapper.softmax(npraw_data).reshape(1, 1000)
+    preds = kdp_wrapper.softmax(npraw_data[0]).reshape(1, 1000)
     top_indexes(preds, 3)
     #print('\nPredicted:', decode_predictions(preds, top=3)[0])
 
