@@ -19,6 +19,8 @@ This project contains python examples for Kneron USB dongle
 
 * WinUSB (Install after plugging in the dongle and run [Zadig](https://zadig.akeo.ie/))
 
+![](docs/zadig.jpg)
+
 **Mac OS**:
 
 * **Mac OS should be later than 10.15.6**.
