@@ -23,6 +23,10 @@ TEST_DME_SSD_FD_DIR = "".join([TEST_DIR, "/dme_ssd_fd/"])
 DME_SSD_FD_MODEL_FILE = "".join([TEST_DME_SSD_FD_DIR, "all_models.bin"])
 DME_SSD_FD_FW_SETUP = "".join([TEST_DME_SSD_FD_DIR, "fw_info.bin"])
 
+TEST_DME_YOLO_224_DIR = "".join([TEST_DIR, "/dme_yolo_224/"])
+DME_YOLO_224_MODEL_FILE = "".join([TEST_DME_YOLO_224_DIR, "all_models.bin"])
+DME_YOLO_224_FW_SETUP = "".join([TEST_DME_YOLO_224_DIR, "fw_info.bin"])
+
 IMG_SOURCE_W = 640
 IMG_SOURCE_H = 480
 DME_IMG_SIZE = IMG_SOURCE_W * IMG_SOURCE_H * 2
@@ -149,6 +153,8 @@ def get_detection_res(dev_idx, inf_size):
     width = 0
     radix = 0
     scale = 0.0
+    npraw_data_array = []
+    data_offset = 0
     for param in outnode_params_res:
         height = param.height
         channel = param.channel
@@ -156,23 +162,28 @@ def get_detection_res(dev_idx, inf_size):
         radix = param.radix
         scale = param.scale
 
-    # print(output_num, h, c, w, pad_up_16(w), radix, scale)
+        # print(output_num, height, channel, width, pad_up_16(width), radix, scale)
 
-    # offset in bytes for TOTAL_OUT_NUMBER + (H/C/W/RADIX/SCALE) + (H/C/W/RADIX/SCALE)
-    offset = ctypes.sizeof(ctypes.c_int) + output_num * ctypes.sizeof(constants.OutputNodeParams)
-    # print("offset ", offset, ctypes.sizeof(c_int), ctypes.sizeof(OutputNodeParams))
+        # offset in bytes for TOTAL_OUT_NUMBER + (H/C/W/RADIX/SCALE) + (H/C/W/RADIX/SCALE)
+        offset = ctypes.sizeof(ctypes.c_int) + output_num * ctypes.sizeof(constants.OutputNodeParams)
+        # print("offset ", offset, ctypes.sizeof(c_int), ctypes.sizeof(OutputNodeParams))
 
-    # get the fixed-point data
-    npdata = npdata.astype("int8")
-    raw_data = []
-    for i in range(1000):
-        raw_data.append(npdata[i * pad_up_16(width) + offset])
+        # get the fixed-point data
+        npdata = npdata.astype("int8")
+        raw_data = []
 
-    # save the fp data into numpy array and convert to float
-    npraw_data = np.array(raw_data)
-    npraw_data = npraw_data.reshape(height, width, channel) / (2 ** radix) / scale
+        raw_data = npdata[offset + data_offset:offset + data_offset + height*channel*pad_up_16(width)]
+        data_offset += height*channel*pad_up_16(width)
+        # print(raw_data.shape, offset, offset + height*channel*pad_up_16(width), height*channel*pad_up_16(width))
+        raw_data = raw_data.reshape(height, channel, pad_up_16(width))
+        raw_data = raw_data[:,:,:width]
 
-    return npraw_data
+        # save the fp data into numpy array and convert to float
+        npraw_data = np.array(raw_data)
+        npraw_data = npraw_data.transpose(0, 2, 1) / (2 ** radix) / scale
+        npraw_data_array.append(npraw_data)
+
+    return npraw_data_array
 
 def capture_frame(image):
     if isinstance(image, str):
@@ -315,6 +326,66 @@ def kdp_dme_load_ssd_model(dev_idx, _model_path):
     sleep(SLEEP_TIME)
     return 0
 
+def kdp_dme_load_yolo_model(dev_idx, _model_path):
+    """Load dme model."""
+    model_id = 0
+    data = (ctypes.c_char * DME_FWINFO_SIZE)()
+    p_buf = (ctypes.c_char * DME_MODEL_SIZE)()
+    ret_size = 0
+
+    # read firmware setup data
+    print("loading models to Kneron Device: ")
+    n_len = api.read_file_to_buf(data, DME_YOLO_224_FW_SETUP, DME_FWINFO_SIZE)
+    if n_len <= 0:
+        print("reading fw setup file failed: {}...\n".format(n_len))
+        return -1
+
+    dat_size = n_len
+
+    n_len = api.read_file_to_buf(p_buf, DME_YOLO_224_MODEL_FILE, DME_MODEL_SIZE)
+    if n_len <= 0:
+        print("reading model file failed: {}...\n".format(n_len))
+        return -1
+
+    buf_len = n_len
+    model_size = n_len
+
+    print("starting DME mode ...\n")
+    ret, ret_size = api.kdp_start_dme(
+        dev_idx, model_size, data, dat_size, ret_size, p_buf, buf_len)
+    if ret:
+        print("could not set to DME mode:{}..\n".format(ret_size))
+        return -1
+
+    print("DME mode succeeded...\n")
+    print("Model loading successful")
+    sleep(SLEEP_TIME)
+
+    # dme configuration
+    model_id = 19      # model id when compiling in toolchain
+    output_num = 2     # number of output node for the model
+    image_col = 640
+    image_row = 480
+    image_ch = 3
+    image_format = (constants.IMAGE_FORMAT_SUB128 |
+                    constants.NPU_FORMAT_RGB565 |
+                    constants.IMAGE_FORMAT_RAW_OUTPUT)
+
+    dme_cfg = constants.KDPDMEConfig(model_id, output_num, image_col,
+                                     image_row, image_ch, image_format)
+
+    dat_size = ctypes.sizeof(dme_cfg)
+    print("starting DME configure ...\n")
+    ret, model_id = api.kdp_dme_configure(
+        dev_idx, ctypes.cast(ctypes.byref(dme_cfg), ctypes.c_char_p), dat_size, model_id)
+    if ret:
+        print("could not set to DME configure mode..\n", model_id)
+        return -1
+
+    print("DME configure model [{}] succeeded...\n".format(model_id))
+    sleep(SLEEP_TIME)
+    return 0
+
 def kdp_dme_load_age_gender_model(dev_idx, _model_path):
     """Load dme model."""
     model_id = 0
@@ -427,7 +498,7 @@ def kdp_inference(dev_idx, img_path):
         status = 0  # Must re-initialize status to 0
         _ret, ssid, status, inf_size = api.kdp_dme_get_status(
             dev_idx, ssid, status, inf_size, inf_res)
-        # print(status)
+        # print(status, inf_size)
         if status == 1:
             npraw_data = get_detection_res(dev_idx, inf_size)
             break
@@ -440,7 +511,7 @@ def kdp_dme_inference(dev_idx, app_id, capture, buf_len, frames):
     inf_res = (ctypes.c_char * 256000)()
     res_flag = False
     mode = 0
-    model_id = 3
+    model_id = 0
 
     _ret, inf_size, res_flag = api.kdp_dme_inference(
         dev_idx, img_buf, buf_len, inf_size, res_flag, inf_res, mode, model_id)
@@ -449,6 +520,8 @@ def kdp_dme_inference(dev_idx, app_id, capture, buf_len, frames):
         det_res = get_age_gender_res(dev_idx, inf_size)
     elif (app_id == constants.APP_FD_LM):
         det_res = get_object_detection_res(dev_idx, inf_size, frames)
+    elif (app_id == constants.APP_TINY_YOLO3):
+        det_res = get_detection_res(dev_idx, inf_size)
 
     return det_res  
 
@@ -792,6 +865,84 @@ def pipeline_inference(device_index, app_id, loops, input_size, capture,
         post_handler(inf_res, result_size, frames)
         img_id_rx += 1
         buffer_depth -= 1
+    return 0
+
+def dme_fill_buffer(device_index, capture, size, frames):
+    """Send 1 image to the DME image buffers using the capture device.
+
+    Arguments:
+        device_index: Connected device ID. A host can connect several devices.
+        capture: Active cv2 video capture instance.
+        size: Size of the input images.
+        frames: List of frames captured by the video capture instance.
+    """
+    print("starting DME inference ...\n")
+    inf_res = (ctypes.c_char * 256000)()
+    res_flag = False
+    mode = 1
+    model_id = 0
+    ssid = 0
+
+    img_buf = isi_capture_frame(capture, frames)
+    _ret, ssid, res_flag = api.kdp_dme_inference(
+        device_index, img_buf, size, ssid, res_flag, inf_res, mode, model_id)
+
+    return 0, ssid
+
+def dme_pipeline_inference(device_index, app_id, loops, input_size, capture,
+                  prev_ssid, frames, post_handler):
+    """Send the rest of images and get the results.
+
+    Arguments:
+        device_index: Connected device ID. A host can connect several devices.
+        app_id: ID of application to be run.
+        loops: Number of images to get results.
+        input_size: Size of input image.
+        capture: Active cv2 video capture instance.
+        prev_ssid: Should be returned from dme_fill_buffer.
+        frames: List of frames captured by the video capture instance.
+        post_handler: Function to process the results of the inference.
+    """
+    inf_res = (ctypes.c_char * 256000)()
+    res_flag = False
+    mode = 1
+    model_id = 0
+    ssid = 0
+    inf_size = 0
+
+    while loops:
+        img_buf = isi_capture_frame(capture, frames)
+        _ret, ssid, res_flag = api.kdp_dme_inference(
+            device_index, img_buf, input_size, ssid, res_flag, inf_res, mode, model_id)
+
+        # get status for previous session
+        # print("ssid prev ", ssid, prev_ssid)
+        while 1:
+            status = 0  # Must re-initialize status to 0
+            _ret, prev_ssid, status, inf_size = api.kdp_dme_get_status(
+                device_index, prev_ssid, status, inf_size, inf_res)
+            # print(status, inf_size)
+            if status == 1:
+                if (app_id == constants.APP_TINY_YOLO3):
+                    npraw_data = get_detection_res(device_index, inf_size)
+                    post_handler(device_index, npraw_data, frames)
+                break
+
+        prev_ssid = ssid
+        loops -= 1
+
+    # Get last 1 results
+    while 1:
+        status = 0  # Must re-initialize status to 0
+        _ret, prev_ssid, status, inf_size = api.kdp_dme_get_status(
+            device_index, prev_ssid, status, inf_size, inf_res)
+        # print(status, inf_size)
+        if status == 1:
+            if (app_id == constants.APP_TINY_YOLO3):
+                npraw_data = get_detection_res(device_index, inf_size)
+                post_handler(device_index, npraw_data, frames)
+            break
+
     return 0
 
 def read_file_to_buf(image_file, image_size):

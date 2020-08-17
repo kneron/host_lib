@@ -7,6 +7,7 @@ from examples.cam_yolo import user_test_cam_yolo
 from examples.cam_isi_yolo import user_test_cam_isi_yolo
 from examples.cam_isi_parallel_yolo import user_test_cam_isi_parallel_yolo
 from examples.cam_dme_ssd_fd import user_test_cam_dme_ssd_fd
+from examples.cam_dme_async_yolo import user_test_cam_dme_async_yolo
 from examples.dme_keras import user_test_dme_keras
 from examples.update_app import user_test_update_app
 from examples.update_fw import user_test_update_fw
@@ -25,7 +26,7 @@ if __name__ == "__main__":
     argparser.add_argument(
         '-t',
         '--task_name',
-        help=("cam_dme_ssd_fd\ncam_yolo\ncam_isi_ssd_fd\ncam_isi_yolo\ncam_isi_parallel_yolo\n"
+        help=("cam_dme_ssd_fd\ncam_dme_async_yolo\ncam_yolo\ncam_isi_ssd_fd\ncam_isi_yolo\ncam_isi_parallel_yolo\n"
               "dme_keras\nupdate_app\nupdate_fw"))
 
     args = argparser.parse_args()
@@ -56,6 +57,7 @@ if __name__ == "__main__":
         "cam_isi_yolo": user_test_cam_isi_yolo,
         "cam_isi_parallel_yolo": user_test_cam_isi_parallel_yolo,
         "cam_dme_ssd_fd": user_test_cam_dme_ssd_fd,
+        "cam_dme_async_yolo": user_test_cam_dme_async_yolo,
         "dme_keras": user_test_dme_keras,
         "update_app": user_test_update_app,
         "update_fw": user_test_update_fw,
