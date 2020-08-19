@@ -267,7 +267,7 @@ def kdp_dme_load_model(dev_idx, _model_path):
     sleep(SLEEP_TIME)
     return 0
 
-def kdp_dme_load_ssd_model(dev_idx, _model_path):
+def kdp_dme_load_ssd_model(dev_idx, _model_path, is_raw_output):
     """Load dme model."""
     model_id = 0
     data = (ctypes.c_char * DME_FWINFO_SIZE)()
@@ -304,12 +304,15 @@ def kdp_dme_load_ssd_model(dev_idx, _model_path):
 
     # dme configuration
     model_id = 3       # model id when compiling in toolchain
-    output_num = 1     # number of output node for the model
+    output_num = 8     # number of output node for the model
     image_col = 640
     image_row = 480
     image_ch = 3
     image_format = (constants.IMAGE_FORMAT_SUB128 |
                     constants.NPU_FORMAT_RGB565)
+
+    if is_raw_output:
+        image_format = image_format | constants.IMAGE_FORMAT_RAW_OUTPUT
 
     dme_cfg = constants.KDPDMEConfig(model_id, output_num, image_col,
                                      image_row, image_ch, image_format)
@@ -521,6 +524,8 @@ def kdp_dme_inference(dev_idx, app_id, capture, buf_len, frames):
     elif (app_id == constants.APP_FD_LM):
         det_res = get_object_detection_res(dev_idx, inf_size, frames)
     elif (app_id == constants.APP_TINY_YOLO3):
+        det_res = get_detection_res(dev_idx, inf_size)
+    elif (app_id == 0):
         det_res = get_detection_res(dev_idx, inf_size)
 
     return det_res  

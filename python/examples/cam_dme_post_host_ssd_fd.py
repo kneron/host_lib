@@ -3,10 +3,9 @@ This is the example for dme ssd fd single test.
 """
 from python_wrapper import kdp_wrapper
 from common import constants
-
+from examples.fdssd.ssd_postprocess import postprocess_
 import cv2
 import sys
-
 
 def overlap(x1_1,y1_1,x2_1,y2_1, x1_2,y1_2,x2_2,y2_2):
     #check if there is any overlap
@@ -53,12 +52,12 @@ def draw_result(dev_idx, det_res, captured_frames):
     #for multiple faces
     for res in det_res:
         #print(type(res))
-        x1 = res[0]
-        y1 = res[1]
-        x2 = res[2]
-        y2 = res[3]
-        class_num = res[4]
-        score = res[5]
+        x1 = int(res[0])
+        y1 = int(res[1])
+        x2 = int(res[2]+res[0])
+        y2 = int(res[3]+res[1])
+        class_num = res[5]
+        score = res[4]
         o_l = overlap(x1,y1,x2,y2,x1_0,y1_0,x2_0,y2_0)
         if (o_l<0.6):
             x1_0 = x1
@@ -88,14 +87,21 @@ def user_test_single_dme(dev_idx, loop):
     """Test single dme."""
     # load model into Kneron device
     model_path = "../test_images/dme_ssd_fd"
-    is_raw_ouput  = False
-    kdp_wrapper.kdp_dme_load_ssd_model(dev_idx, model_path, False)
+    is_raw_ouput  = True
 
+    kdp_wrapper.kdp_dme_load_ssd_model(dev_idx, model_path, is_raw_ouput)
     image_source_h = 480
     image_source_w = 640
     image_size = image_source_w * image_source_h * 2
     frames = []
-    app_id = constants.APP_FD_LM
+    app_id = 0 # if app_id is 0, output raw data for kdp_wrapper.kdp_dme_inference
+
+    # the parameters for postprocess
+    anchor_path       = './examples/fdssd/models/anchor_face.npy'
+    model_input_shape = (200, 200)
+    score_thres       = 0.5
+    nms_thres         = 0.35
+    only_max          = False
 
     # Setup video capture device.
     capture = kdp_wrapper.setup_capture(0, image_source_w, image_source_h)
@@ -103,16 +109,17 @@ def user_test_single_dme(dev_idx, loop):
         return -1
 
     while (loop):
-        det_res = kdp_wrapper.kdp_dme_inference(dev_idx, app_id, capture, image_size, frames)
+        raw_res = kdp_wrapper.kdp_dme_inference(dev_idx, app_id, capture, image_size, frames)
+
+        det_res = postprocess_(raw_res, anchor_path, model_input_shape,
+                            image_source_w, image_source_h, score_thres, only_max, nms_thres)
+
         draw_result(dev_idx, det_res, frames)
         loop -= 1
-        # print("Total class {}: total detection {}".format(det_res[0], det_res[1]))
-        # for i in range(det_res[1]):
-        #     print("x1,y1,x2,y2:", det_res[4*i+2],det_res[4*i+3],det_res[4*i+4],det_res[4*i+5])
 
     kdp_wrapper.kdp_exit_dme(dev_idx)
 
-def user_test_cam_dme_ssd_fd(dev_idx, user_id):
+def user_test_cam_dme_post_host_ssd_fd(dev_idx, user_id):
     # dme test
     user_test_single_dme(dev_idx, 1000)
     return 0
