@@ -73,9 +73,40 @@ optional arguments:
 
 There are two kinds of examples, need `update_app` and don't need extra steps.
 
+**If this is the first time you are using a dongle, please run `update_app` to update the firmware.**
+Just follow the steps below to update `tiny_yolo_v3` into the dongle and update the firmware.
+
+1. Copy the binary files (`*.bin`) under `app_binaries/tiny_yolo_v3` into `ota/ready_to_load`.
+2. Enter `python` directory.
+3. Run `python main.py -t update_app` (This step may take some time).
+
+#### Examples need `update_app`
+
+Most examples need extra steps to upload the model file into the dongle. You can find the model files under `app_binaries`. Here is a table of the relationship between models and examples:
+
+| Example                | Model        |
+|------------------------|--------------|
+| cam_dme_ssd_fd         | ssd_fd       |
+| cam_isi_ssd_fd         | ssd_fd       |
+| cam_yolo               | tiny_yolo_v3 |
+| cam_isi_yolo           | tiny_yolo_v3 |
+| cam_isi_parallel_yolo  | tiny_yolo_v3 |
+
+Here are the steps you need to update the dongle and run the example. Let's take `cam_isi_yolo` as the example.
+
+1. From the chart, we know we need to use model `tiny_yolo_v3`.
+2. Copy the binary files (`*.bin`) under `app_binaries/tiny_yolo_v3` into `ota/ready_to_load`.
+3. Enter `python` directory.
+4. Run `python main.py -t update_app` (This step may take some time).
+5. Run `python main.py -t cam_isi_yolo`.
+
+Now, you can get a window pop up and running your test. Congratulations!
+
+To stop the test and quit, just press `q` when focusing on the command line.
+
 #### No Extra Step Example
 
-Let's first start with the example do not need extra steps: `dme_keras`.
+Let's try the example do not need extra steps: `dme_keras`.
 
 You just need to run the command `python main.py -t dme_keras` with your dongle plugged in. Then, you can get the output without any error message.
 
@@ -107,26 +138,6 @@ DME configure model [1000] succeeded...
 de init kdp host lib....
 ```
 
-#### Examples need `update_app`
+## Documents
 
-Most examples need extra steps to upload the model file into the dongle. You can find the model files under `app_binaries`. Here is a table of the relationship between models and examples:
-
-| Example                | Model        |
-|------------------------|--------------|
-| cam_dme_ssd_fd         | ssd_fd       |
-| cam_isi_ssd_fd         | ssd_fd       |
-| cam_yolo               | tiny_yolo_v3 |
-| cam_isi_yolo           | tiny_yolo_v3 |
-| cam_isi_parallel_yolo  | tiny_yolo_v3 |
-
-Here are the steps you need to update the dongle and run the example. Let's take `cam_isi_yolo` as the example.
-
-1. From the chart, we know we need to use model `tiny_yolo_v3`.
-2. Copy the binary files (`*.bin`) under `app_binaries/tiny_yolo_v3` into `ota/ready_to_load`.
-3. Enter `python` directory.
-4. Run `python main.py -t update_app` (This step may take some time).
-5. Run `python main.py -t cam_isi_yolo`.
-
-Now, you can get a window pop up and running your test. Congratulations!
-
-To stop the test and quit, just press `q` when focusing on the command line.
+For more detailed documents, please visit <http://doc.kneron.com:8888/pythondocs/>.
