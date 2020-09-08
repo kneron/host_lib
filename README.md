@@ -80,6 +80,8 @@ Just follow the steps below to update `tiny_yolo_v3` into the dongle and update 
 2. Enter `python` directory.
 3. Run `python main.py -t update_app` (This step may take some time).
 
+> If you have errors related to adding device failure, please check your permission. If on Linux, please try using `sudo`.
+
 #### Examples need `update_app`
 
 Most examples need extra steps to upload the model file into the dongle. You can find the model files under `app_binaries`. Here is a table of the relationship between models and examples:
