@@ -2,6 +2,8 @@
 
 This project contains python examples for Kneron USB dongle
 
+This is a brief introduction. For more detailed documents, please visit <http://doc.kneron.com/pythondocs>.
+
 ## Install Host Lib Python Package
 
 ### Prerequisites
@@ -139,7 +141,3 @@ DME configure model [1000] succeeded...
 272 0.057467412876039244
 de init kdp host lib....
 ```
-
-## Documents
-
-For more detailed documents, please visit <http://doc.kneron.com:8888/pythondocs/>.
