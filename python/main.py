@@ -1,26 +1,70 @@
 """
-This is the main function to run any of the Python examples.
+This is the main function to run any of the Python examples_kl520.
 """
 import argparse
-from examples.cam_isi_ssd_fd import user_test_cam_isi_ssd_fd
-from examples.cam_yolo import user_test_cam_yolo
-from examples.cam_isi_yolo import user_test_cam_isi_yolo
-from examples.cam_isi_parallel_yolo import user_test_cam_isi_parallel_yolo
-from examples.cam_dme_ssd_fd import user_test_cam_dme_ssd_fd
-from examples.cam_dme_post_host_ssd_fd import user_test_cam_dme_post_host_ssd_fd
-from examples.cam_dme_serial_yolo import user_test_cam_dme_serial_yolo
-from examples.cam_dme_async_yolo import user_test_cam_dme_async_yolo
-from examples.dme_keras import user_test_dme_keras
-from examples.update_app import user_test_update_app
-from examples.update_fw import user_test_update_fw
-from kdp_host_api import (
-    kdp_add_dev, kdp_init_log, kdp_lib_de_init, kdp_lib_init, kdp_lib_start)
+import pkgutil
+import importlib
+import os
+import re
+from kdp_host_api import kdp_connect_usb_device, kdp_init_log, kdp_lib_de_init, kdp_lib_init, kdp_lib_start
 
+''' kdp_host_api config '''
 KDP_UART_DEV = 0
 KDP_USB_DEV = 1
 
+''' example import config '''
+EXAMPLE_FUNCTION_NAME = 'user_test'
+
+''' import ignore list '''
+IGNORE_MODULE_LIST = [
+    'utils',
+    'fdssd',
+    'yolo',
+    'keras_only'
+]
+
+
+def get_module_names(examples_dir, example_regex=r'^examples_kl\d{3}'):
+    module_names = []
+    folder_names = [name for name in os.listdir(examples_dir) if os.path.isdir(name)]
+    for folder_name in folder_names:
+        if re.match(pattern=example_regex, string=folder_name):
+            module_names.append(folder_name)
+    return module_names
+
+
+def get_all_module_path(package_path_list):
+    example_dict = {}
+
+    for package_path in package_path_list:
+        for finder, name, _ in pkgutil.iter_modules(path=[package_path]):
+            package_name = os.path.basename(finder.path)
+            search_obj = re.search(pattern=r'(kl\d\d\d)$', string=package_name)
+
+            if search_obj and (name not in IGNORE_MODULE_LIST):
+                kneron_device_name = search_obj.group(1)
+                example_dict['-'.join([kneron_device_name.upper(), name])] = '{}.{}'.format(package_name, name)
+    return example_dict
+
+
+def import_example_function(module_path, function_name):
+    try:
+        module = importlib.import_module(module_path)
+        if hasattr(module, function_name):
+            return getattr(module, function_name)
+    except Exception as e:
+        print('Can not import {}, function {}'.format(module_path, function_name))
+
+
+''' get example modules '''
+example_module_folder_path = os.path.dirname(os.path.abspath(__file__))
+module_names = get_module_names(examples_dir=example_module_folder_path,
+                                example_regex=r'^examples_kl\d\d\d$')
+example_dict = get_all_module_path(
+    package_path_list=[os.path.join(example_module_folder_path, module_name) for module_name in module_names])
+
 if __name__ == "__main__":
-    ### input parameters ###
+    ''' input parameters '''
     argparser = argparse.ArgumentParser(
         description="Run Python examples by calling the Python APIs",
         formatter_class=argparse.RawTextHelpFormatter)
@@ -28,12 +72,12 @@ if __name__ == "__main__":
     argparser.add_argument(
         '-t',
         '--task_name',
-        help=("cam_dme_ssd_fd\ncam_dme_post_host_ssd_fd\ncam_dme_serial_yolo\ncam_dme_async_yolo\ncam_yolo\ncam_isi_ssd_fd\ncam_isi_yolo\ncam_isi_parallel_yolo\n"
-              "dme_keras\nupdate_app\nupdate_fw"))
+        help=('\n'.join(example_dict.keys())),
+        choices=example_dict.keys())
 
     args = argparser.parse_args()
 
-    ### initialize Kneron USB device ###
+    '''  initialize Kneron USB device '''
     kdp_init_log("/tmp/", "mzt.log")
 
     if kdp_lib_init() < 0:
@@ -41,7 +85,8 @@ if __name__ == "__main__":
 
     print("adding devices....\n")
 
-    dev_idx = kdp_add_dev(KDP_USB_DEV, "")
+    dev_idx = kdp_connect_usb_device(scan_index=1)
+
     if dev_idx < 0:
         print("add device failed.\n")
 
@@ -52,21 +97,11 @@ if __name__ == "__main__":
     user_id = 0
 
     print("Task: ", args.task_name)
-    ### parse parameters and run different example ###
-    {
-        "cam_isi_ssd_fd": user_test_cam_isi_ssd_fd,
-        "cam_yolo": user_test_cam_yolo,
-        "cam_isi_yolo": user_test_cam_isi_yolo,
-        "cam_isi_parallel_yolo": user_test_cam_isi_parallel_yolo,
-        "cam_dme_ssd_fd": user_test_cam_dme_ssd_fd,
-        "cam_dme_post_host_ssd_fd": user_test_cam_dme_post_host_ssd_fd,
-        "cam_dme_serial_yolo": user_test_cam_dme_serial_yolo,
-        "cam_dme_async_yolo": user_test_cam_dme_async_yolo,
-        "dme_keras": user_test_dme_keras,
-        "update_app": user_test_update_app,
-        "update_fw": user_test_update_fw,
-    }.get(args.task_name, lambda: 'Invalid test')(dev_idx, user_id)
+    '''  parse parameters and run different example '''
+    example_function = import_example_function(module_path=example_dict[args.task_name],
+                                               function_name=EXAMPLE_FUNCTION_NAME)
+    example_function(dev_idx, user_id)
 
-    ### de-initialize Kneron USB device ###
+    '''  de-initialize Kneron USB device '''
     print("de init kdp host lib....\n")
     kdp_lib_de_init()
