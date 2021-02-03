@@ -174,8 +174,8 @@ DME configure model [18] succeeded...
 de init kdp host lib....
 ```
 
-![](C:\Users\jennifer.lin\Downloads\git\host_lib\docs\kneo_1.JPG)
+![](docs/kneo_1.JPG)
 
-![](C:\Users\jennifer.lin\Downloads\git\host_lib\docs\kneo_2.JPG)
+![](docs/kneo_2.JPG)
 
-![](C:\Users\jennifer.lin\Downloads\git\host_lib\docs\kneo_3.JPG)
+![](docs/kneo_3.JPG)
