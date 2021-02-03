@@ -173,3 +173,9 @@ DME configure model [18] succeeded...
 272 0.02318463970950107
 de init kdp host lib....
 ```
+
+![](C:\Users\jennifer.lin\Downloads\git\host_lib\docs\kneo_1.JPG)
+
+![](C:\Users\jennifer.lin\Downloads\git\host_lib\docs\kneo_2.JPG)
+
+![](C:\Users\jennifer.lin\Downloads\git\host_lib\docs\kneo_3.JPG)
