@@ -12,8 +12,10 @@ Only support **KL520** so far, other models are coming soon.
 
 **General**:
 
-* Python 3.8
+* Python 3.8  
+   * Some system may have python 2.7 as their default python. In that case, you need to use replace 'python' with 'python3' , 'pip' with 'pip3'  in the following examples.  
 * opencv-python (Install using `pip install opencv-python`)
+   * on raspberry pi,  using `pip3 install opencv-python==3.4.6.27` and if you have other version of opencv-python installed, please run `pip3 uninstall opencv-python`to uninstall them first
 
 **Linux**:
 
