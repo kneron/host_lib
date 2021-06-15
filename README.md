@@ -4,7 +4,7 @@ This project contains python examples for Kneron USB dongle
 
 This is a brief introduction. For more detailed documents, please visit <http://doc.kneron.com/pythondocs>.
 
-Only support **KL520** so far, other models are coming soon.
+Support **KL520, KL720**, other models are coming soon.
 
 ## Install Host Lib Python Package
 
@@ -16,9 +16,11 @@ Only support **KL520** so far, other models are coming soon.
    * Some system may have python 2.7 as their default python. In that case, you need to use replace 'python' with 'python3' , 'pip' with 'pip3'  in the following examples.  
 * opencv-python (Install using `pip install opencv-python`)
    * on raspberry pi,  using `pip3 install opencv-python==3.4.6.27` and if you have other version of opencv-python installed, please run `pip3 uninstall opencv-python`to uninstall them first
+* matplotlib and pillow (Install using `pip install matplotlib`)
 
 **Linux**:
 
+* **For Ubuntu, 18.04 is verified**.
 * libusb (Ubuntu install using `apt install libusb-1.0-0-dev`)
 
 **Windows**:
@@ -77,16 +79,14 @@ pip install -t <site-packages_relative_path_in_sys.path> python/packages/kdp_hos
 If all of the packages are installed correctly, you would get a message with available examples like the following:
 
 ```
-usage: main.py [-h]
-               [-t {KL520-cam_dme_async_post_host_yolo,KL520-cam_dme_serial_post_host_ssd_fd,KL520-cam_dme_serial_post_host_yolo,KL520-cam_dme_serial_ssd_fd,KL520-cam_isi_async_parallel_post_host_yolo,KL520-cam_isi_async_parallel_yolo,KL520-cam_isi_async_ssd_fd,KL520-cam_isi_async_yolo,KL520-cam_isi_serial_yolo,KL520-dme_keras,KL520-get_crc,KL520-get_kn_num,KL520-get_model_info,KL520-get_nef_model_metadata,KL520-soft_reset,KL520-update_app_nef_model,KL520-update_fw}]
-
 Run Python examples by calling the Python APIs
 
 optional arguments:
   -h, --help            show this help message and exit
-  -t {KL520-cam_dme_async_post_host_yolo,KL520-cam_dme_serial_post_host_ssd_fd,KL520-cam_dme_serial_post_host_yolo,KL520-cam_dme_serial_ssd_fd,KL520-cam_isi_async_parallel_post_host_yolo,KL520-cam_isi_async_parallel_yolo,KL520-cam_isi_async_ssd_fd,KL520-cam_isi_async_yolo,KL520-cam_isi_serial_yolo,KL520-dme_keras,KL520-get_crc,KL520-get_kn_num,KL520-get_model_info,KL520-get_nef_model_metadata,KL520-soft_reset,KL520-update_app_nef_model,KL520-update_fw}, --task_name {KL520-cam_dme_async_post_host_yolo,KL520-cam_dme_serial_post_host_ssd_fd,KL520-cam_dme_serial_post_host_yolo,KL520-cam_dme_serial_ssd_fd,KL520-cam_isi_async_parallel_post_host_yolo,KL520-cam_isi_async_parallel_yolo,KL520-cam_isi_async_ssd_fd,KL520-cam_isi_async_yolo,KL520-cam_isi_serial_yolo,KL520-dme_keras,KL520-get_crc,KL520-get_kn_num,KL520-get_model_info,KL520-get_nef_model_metadata,KL520-soft_reset,KL520-update_app_nef_model,KL520-update_fw}
+  -t TASK_NAME, --task_name TASK_NAME
                         KL520-cam_dme_async_post_host_yolo
                         KL520-cam_dme_serial_post_host_ssd_fd
+                        KL520-cam_dme_serial_post_host_tiny_yolov3_ssd_fd
                         KL520-cam_dme_serial_post_host_yolo
                         KL520-cam_dme_serial_ssd_fd
                         KL520-cam_isi_async_parallel_post_host_yolo
@@ -94,6 +94,8 @@ optional arguments:
                         KL520-cam_isi_async_ssd_fd
                         KL520-cam_isi_async_yolo
                         KL520-cam_isi_serial_yolo
+                        KL520-dme_async_pre_post_host_classification
+                        KL520-dme_async_pre_post_host_fcos
                         KL520-dme_keras
                         KL520-get_crc
                         KL520-get_kn_num
@@ -102,18 +104,33 @@ optional arguments:
                         KL520-soft_reset
                         KL520-update_app_nef_model
                         KL520-update_fw
+                        KL720-cam_isi_post_host_yolov3_ssd_fd
+                        KL720-cam_isi_pre_post_host_fcos
+                        KL720-get_kn_num
+                        KL720-get_model_info
+                        KL720-get_nef_model_metadata
+                        KL720-isi_load_model
+                        KL720-isi_pre_post_host_classification
+                        KL720-soft_reset
+                        KL720-update_app_nef_model
+                        KL720-update_fw
+                        KL720-yolo_public_example
+  -p [PARAM_LIST [PARAM_LIST ...]], --param_list [PARAM_LIST [PARAM_LIST ...]]
+                        Any input params to pass to the test you run
 ```
 
 ### Run Examples
 
+#### 520 version
+
 There are two kinds of examples, need `update_app_nef_model` and don't need extra steps.
 
-**If this is the first time you are using a dongle, please run `update_app_nef_model` to update the firmware and nef model.**
+**If this is the first time you are using a KL520 dongle, please run `KL520-update_app_nef_model` to update the firmware and nef model.**
 Just follow the steps below to update `tiny_yolo_v3` into the dongle and update the firmware and nef model.
 
 1. Copy all files under `input_models/KL520/tiny_yolo_v3` and `app_binaries/KL520/tiny_yolo_v3` into `app_binaries/KL520/ota/ready_to_load`.
 2. Enter `python` directory.
-3. Run `python main.py -t update_app_nef_model` (This step may take some time).
+3. Run `python main.py -t KL520-update_app_nef_model` (This step may take some time).
 
 > If you have errors related to adding device failure, please check your permission. If on Linux, please try using `sudo`.
 
@@ -175,6 +192,26 @@ DME configure model [18] succeeded...
 272 0.02318463970950107
 de init kdp host lib....
 ```
+#### 720 version
+
+**If this is the first time you are using a KL720 dongle, please run `KL720-update_fw` to update the firmware.**
+
+1. Copy all files under `app_binaries/KL720/solution_companion` into `app_binaries/KL720/dfu/ready_to_load`.
+2. Enter `python` directory.
+3. Run `python main.py -t KL720-update_fw` (This step may take some time).
+
+> If you have errors related to adding device failure, please check your permission. If on Linux, please try using `sudo`.
+
+#### Run Examples
+
+Here are the steps you need to run the example. Let's take `KL720-cam_isi_pre_post_host_fcos` as the example.
+
+1. Enter `python` directory.
+2. Run `python main.py -t KL720-cam_isi_pre_post_host_fcos`.
+
+Now, you can get a window pop up and running your test. Congratulations!
+
+To stop the test and quit, just press `q` when focusing on the command line.
 
 ![](docs/kneo_1.JPG)
 

@@ -6,11 +6,14 @@ import pkgutil
 import importlib
 import os
 import re
-from kdp_host_api import kdp_connect_usb_device, kdp_init_log, kdp_lib_de_init, kdp_lib_init, kdp_lib_start
+from common import kdp_wrapper
 
 ''' kdp_host_api config '''
 KDP_UART_DEV = 0
 KDP_USB_DEV = 1
+VENDOR_ID = 0x3231
+KL520_PRODUCT_ID = 0x0100
+KL720_PRODUCT_ID = 0x0200
 
 ''' example import config '''
 EXAMPLE_FUNCTION_NAME = 'user_test'
@@ -20,7 +23,8 @@ IGNORE_MODULE_LIST = [
     'utils',
     'fdssd',
     'yolo',
-    'keras_only'
+    'keras_only',
+    'fdr'
 ]
 
 
@@ -72,27 +76,56 @@ if __name__ == "__main__":
     argparser.add_argument(
         '-t',
         '--task_name',
-        help=('\n'.join(example_dict.keys())),
-        choices=example_dict.keys())
+        help=('\n'.join(example_dict.keys())))
+
+    argparser.add_argument(
+        '-p',
+        '--param_list',
+        help=('Any input params to pass to the test you run'),
+        nargs='*'
+    )
 
     args = argparser.parse_args()
 
     '''  initialize Kneron USB device '''
-    kdp_init_log("/tmp/", "mzt.log")
+    kdp_wrapper.init_log("/tmp/", "mzt.log")
 
-    if kdp_lib_init() < 0:
+    if kdp_wrapper.lib_init() < 0:
         print("init for kdp host lib failed.\n")
+        exit(-1)
 
     print("adding devices....\n")
 
-    dev_idx = kdp_connect_usb_device(scan_index=1)
+    category = args.task_name[:5]
+    if category == "KL520":
+        pid = KL520_PRODUCT_ID
+    elif category == "KL720":
+        pid = KL720_PRODUCT_ID
+    else:
+        print("Task category not in KL520 or KL720: ", category)
+        exit(-1)
+
+    dev_idx = -1
+
+    # dev_list is the list of [scan_index, isConnectable, vendor_id, product_id, link_speed, serial_number, device_path]
+    ret, dev_list = kdp_wrapper.scan_usb_devices()
+
+    for i in range(len(dev_list)):
+        if (dev_list[i][3] == pid):#get the first KL520 or KL720 device
+            # found it, now try to connect
+            dev_idx = kdp_wrapper.connect_usb_device(dev_list[i][0])
+            break
+
+    # print("dev_idx:", dev_idx)
 
     if dev_idx < 0:
         print("add device failed.\n")
+        exit(-1)
 
     print("start kdp host lib....\n")
-    if kdp_lib_start() < 0:
+    if kdp_wrapper.lib_start() < 0:
         print("start kdp host lib failed.\n")
+        exit(-1)
 
     user_id = 0
 
@@ -100,8 +133,12 @@ if __name__ == "__main__":
     '''  parse parameters and run different example '''
     example_function = import_example_function(module_path=example_dict[args.task_name],
                                                function_name=EXAMPLE_FUNCTION_NAME)
-    example_function(dev_idx, user_id)
+
+    if args.param_list is not None:
+        example_function(dev_idx, user_id, args.param_list)
+    else:
+        example_function(dev_idx, user_id)
 
     '''  de-initialize Kneron USB device '''
     print("de init kdp host lib....\n")
-    kdp_lib_de_init()
+    kdp_wrapper.lib_de_init()

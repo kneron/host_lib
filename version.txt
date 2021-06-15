@@ -1,0 +1,4 @@
+Version Information:
+host_lib = 1.0.0
+520FW = 1.5.0.0
+720FW = 1.3.0
