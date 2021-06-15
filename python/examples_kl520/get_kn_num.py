@@ -1,26 +1,23 @@
 """
 This is the example for get kn number.
 """
-from examples_kl520.utils import kdp_wrapper
+from common import kdp_wrapper
 
+def user_test_kn_num(device_index, user_id):
+    """User test get kn number."""
+    print("\nStart getting KN number...")
 
-def user_test_kn_num(dev_idx, user_id):
-    """User test get kn number"""
-    print("starting get KN number ...\n")
-    ret, kn_number = kdp_wrapper.kdp_get_kn_number(dev_idx, 0)
-    if ret:
-        print("Could not get KN number..\n")
+    kn_number = kdp_wrapper.get_kn_number(device_index)
+
+    if kn_number == -1:
         return -1
-
-    if (kn_number == 0xFFFF):
-        print("Not supported by the version of the firmware\n")
-    else:
-        print("KN number: 0x{:06x}\n".format(kn_number))
+    elif kn_number != -2:
+        print(f"\nKN number: 0x{kn_number:06x}\n")
 
     return 0
 
-def user_test(dev_idx, user_id):
-    """User test get kn number"""
-    user_test_kn_num(dev_idx, user_id)
+def user_test(device_index, user_id):
+    """User test get kn number."""
+    user_test_kn_num(device_index, user_id)
 
     return 0

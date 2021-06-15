@@ -1,41 +1,39 @@
 """
-This is the example for get model info.
+This is the example for getting model info.
 """
-from examples_kl520.utils import kdp_wrapper
+from common import kdp_wrapper
 
-
-def user_test_model_info(dev_idx, user_id):
+def user_test_model_info(device_index, user_id):
     """User test get model info"""
-    print("starting get model info in DDR ...\n")
-    ret, model_info = kdp_wrapper.kdp_get_model_info(dev_idx, 1)
-    if ret:
-        print("Could not get model info..\n")
+    print("\nStart getting model info in DDR...")
+
+    model_info = kdp_wrapper.get_model_info(device_index, 1)
+
+    if not model_info:
         return -1
-
-    if (model_info[0] == 0xFFFF):
-        print("Not supported by the version of the firmware\n")
+    elif model_info[0] == 0xFFFF:
+        print("Not supported by the version of the firmware")
     else:
-        print("Total model: {}\n".format(model_info[0]))
-        for i in range(model_info[0]):
-            print("Model {}: {}\n".format(i, model_info[i+1]))
+        print(f"\nTotal model: {model_info[0]}")
+        for index, model_num in enumerate(model_info[1:]):
+            print(f"Model {index}: {model_num}")
 
-    print("starting get model info in Flash ...\n")
-    ret, model_info = kdp_wrapper.kdp_get_model_info(dev_idx, 0)
-    if ret:
-        print("Could not get model info..\n")
+    print("\nStart getting model info in Flash...")
+    model_info = kdp_wrapper.get_model_info(device_index, 0)
+
+    if not model_info:
         return -1
-
-    if (model_info[0] == 0xFFFF):
-        print("Not supported by the version of the firmware\n")
+    elif model_info[0] == 0xFFFF:
+        print("Not supported by the version of the firmware")
     else:
-        print("Total model: {}\n".format(model_info[0]))
-        for i in range(model_info[0]):
-            print("Model {}: {}\n".format(i, model_info[i+1]))
+        print(f"\nTotal model: {model_info[0]}")
+        for index, model_num in enumerate(model_info[1:]):
+            print(f"Model {index}: {model_num}")
 
     return 0
 
-def user_test(dev_idx, user_id):
-    """User test get model info"""
-    user_test_model_info(dev_idx, user_id)
+def user_test(device_index, user_id):
+    """User test get model info."""
+    user_test_model_info(device_index, user_id)
 
     return 0
